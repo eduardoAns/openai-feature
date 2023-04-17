@@ -1,11 +1,54 @@
 import Head from 'next/head'
-import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
+import { Button, FormControl, FormLabel, Input, InputGroup, Text } from '@chakra-ui/react'
+import cohere from 'cohere-ai';
+import { useState } from 'react';
+import { Configuration, OpenAIApi } from 'openai';
 
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
+
+  cohere.init('qCCqPcRJyskarlBDzaWtfP6Ulq7e1fsWhuNGnEaY'); // This is your trial API key
+  
+  const [textGenerateList, setTextGenerateList]  = useState<string[]>()
+  const [isLoading, setisLoading] = useState(false)
+  const [topicInput, setTopicInput] = useState<string>()
+  const [isError, setIsError] = useState(false)
+   
+  const openiResponse = async(e:any) => {
+
+    e.preventDefault()
+    setisLoading(true)
+    const configuration = new Configuration({
+      apiKey: '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'
+    });
+
+    const openai = new OpenAIApi(configuration);
+    const response = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Genera una introduccion de tipo informe escolar de minimo 100 palabras y maximo 200 palabras. Considera redactarlo como una persona entre 15 y 18 años. El tema es: ${topicInput}. Los subtemas son: tratamiento de enfermedades crónicas, desarrollo de herramientas tecnológicas y la tecnología de energía eólica  `,
+      temperature: 1,
+      max_tokens: 2000,
+    });
+
+    const textResponse = response.data.choices[0].text
+    const responseList = textResponse?.split("\n\n")
+    console.log(textResponse)
+    setTextGenerateList(responseList);
+    setisLoading(false)
+  }
+
+  const handleInput = (e:any) => {
+    setIsError(false)
+    if(e.target.value.length < 3) {
+      setIsError(true)
+    }
+    setTopicInput(e.target.value)
+}
+  
+
   return (
     <>
       <Head>
@@ -15,99 +58,34 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
+        <Text fontSize={'3xl'}> Generador de introduccion para informes escolares.</Text>
+
+        <form onSubmit={openiResponse}>
+
+          <FormControl isRequired mb={2}>
+            <FormLabel>Tema </FormLabel>
+
+            <InputGroup>
+              <Input 
+                autoFocus
+                name="topicInput"
+                value={topicInput}
+                type="text"             
+                placeholder="Topic" 
+                onChange={handleInput}
+                width={'xl'}
               />
-            </a>
-          </div>
-        </div>
+            </InputGroup>
+          </FormControl >
+          {isError ? <Text>minimo 3 palabras</Text>:''}
+          <Button type='submit'>genera open-ai</Button>
+        </form>
 
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-        </div>
+        { isLoading ? 
+          <Text>Cargando...</Text> : 
+          textGenerateList?.map((textGenerate)=>( <Text>{textGenerate}</Text>))
+        }
 
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
-        </div>
       </main>
     </>
   )
